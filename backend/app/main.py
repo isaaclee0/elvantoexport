@@ -40,6 +40,10 @@ async def root():
 async def health():
     return {"status": "healthy"}
 
+@app.get("/api/health")
+async def api_health():
+    return {"status": "healthy"}
+
 @app.post("/api/export/xlsx")
 async def export_to_xlsx(request: Request):
     """Export filtered people data to XLSX"""
