@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:9000';
+// REACT_APP_API_URL should be the base URL without /api
+// Examples:
+// - http://localhost:9000 (development)
+// - https://elvantoexport.oneclickit.com.au (production with reverse proxy at /api)
+const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:9000').replace(/\/$/, '');
 
 function App() {
   const [apiKey, setApiKey] = useState('');
@@ -52,7 +56,7 @@ function App() {
   useEffect(() => {
     if (!apiKeySubmitted) return;
     
-    fetch(`${API_URL}/health`)
+    fetch(`${API_URL}/api/health`)
       .then(response => response.json())
       .then(data => {
         setStatus('connected');

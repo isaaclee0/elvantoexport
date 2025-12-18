@@ -116,7 +116,9 @@ This will build and push:
 2. Select **Web editor** or **Upload**
 3. Use the `docker-compose.hub.yml` file (or copy its contents)
 4. Configure environment variables:
-   - `REACT_APP_API_URL`: **REQUIRED** - The public URL where your backend will be accessible (e.g., `http://your-server-ip:9000` or `https://your-domain.com/api` if using reverse proxy)
+   - `REACT_APP_API_URL`: **REQUIRED** - The base URL where your backend will be accessible (without `/api`). Examples:
+     - Development: `http://localhost:9000`
+     - Production with reverse proxy: `https://elvantoexport.oneclickit.com.au` (the reverse proxy should forward `/api/*` to the backend)
    - `IMAGE_VERSION`: Image version to use (default: `latest`, or specify like `1.0.0`)
    - `BACKEND_PORT`: Backend port (default: `9000`)
    - `FRONTEND_PORT`: Frontend port (default: `80`)
@@ -131,13 +133,18 @@ This will build and push:
 3. Enter repository URL: `https://github.com/isaaclee0/elvantoexport.git`
 4. Set the **Compose path** to: `docker-compose.prod.yml` (or `docker-compose.portainer.yml` if using Nginx Proxy Manager)
 5. Configure environment variables:
-   - `REACT_APP_API_URL`: **REQUIRED** - The public URL where your backend will be accessible (e.g., `http://your-server-ip:9000` or `https://your-domain.com/api` if using reverse proxy)
+   - `REACT_APP_API_URL`: **REQUIRED** - The base URL where your backend will be accessible (without `/api`). Examples:
+     - Development: `http://localhost:9000`
+     - Production with reverse proxy: `https://elvantoexport.oneclickit.com.au` (the reverse proxy should forward `/api/*` to the backend)
    - `BACKEND_PORT`: Backend port (default: `9000`)
    - `FRONTEND_PORT`: Frontend port (default: `80`)
    - `ELVANTO_API_URL`: Elvanto API URL (default: `https://api.elvanto.com/v1`)
 6. Deploy the stack
 
-**Important**: The `REACT_APP_API_URL` must be the **public URL** that browsers can access, not an internal Docker service name. This is because the frontend runs in the user's browser, not inside Docker.
+**Important**: 
+- The `REACT_APP_API_URL` should be the **base URL** (without `/api`). The frontend will automatically add `/api` to all API routes.
+- This must be the **public URL** that browsers can access, not an internal Docker service name. This is because the frontend runs in the user's browser, not inside Docker.
+- If using a reverse proxy, configure it to forward `/api/*` to the backend container (e.g., `elvanto-export-backend:9000`), and the proxy should strip the `/api` prefix before forwarding.
 
 #### Portainer with Nginx Proxy Manager
 
@@ -148,7 +155,8 @@ If you're using Nginx Proxy Manager (NPM) with Portainer:
 3. Set up two proxy hosts in NPM:
    - **Frontend**: `https://your-domain.com` → `elvanto-export-frontend:80` (container name)
    - **Backend API**: `https://your-domain.com/api` → `elvanto-export-backend:9000` (container name)
-4. Set `REACT_APP_API_URL` to `https://your-domain.com/api` (the public backend URL)
+   - **Important**: Configure the reverse proxy to strip the `/api` prefix before forwarding to the backend (or use a rewrite rule)
+4. Set `REACT_APP_API_URL` to `https://your-domain.com` (the base URL, without `/api`)
 5. The build contexts (`./backend` and `./frontend`) work correctly with Portainer's GitHub stack feature
 
 **Example Configuration:**
