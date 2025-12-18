@@ -40,7 +40,64 @@ docker-compose up -d
 
 ## Production Deployment
 
-### Using Portainer GitHub Stack
+### Building and Pushing to Docker Hub
+
+To build multi-architecture images (AMD64 and ARM64) and push to Docker Hub:
+
+1. **Create repositories on Docker Hub:**
+   - Go to https://hub.docker.com/repositories/staugustine1
+   - Create two repositories:
+     - `elvanto-export-backend` (set to Private if desired)
+     - `elvanto-export-frontend` (set to Private if desired)
+
+2. **Login to Docker Hub:**
+```bash
+docker login
+# Enter your Docker Hub username and password/token
+```
+
+3. **Install Docker Buildx** (if not already installed):
+```bash
+# Buildx usually comes with Docker Desktop
+# For Linux, you may need to install it separately
+docker buildx version
+```
+
+4. **Build and push images:**
+```bash
+# Make the script executable (if needed)
+chmod +x build-and-push.sh
+
+# Build and push (default API URL: http://localhost:9000)
+./build-and-push.sh
+
+# Or with custom API URL for your deployment
+REACT_APP_API_URL=http://your-server-ip:9000 ./build-and-push.sh
+```
+
+This will build and push:
+- `staugustine1/elvanto-export-backend:latest` (and git commit hash tag)
+- `staugustine1/elvanto-export-frontend:latest` (and git commit hash tag)
+
+**Note**: 
+- The images are built for both `linux/amd64` and `linux/arm64` architectures, making them compatible with ARM-based servers (like Raspberry Pi, Apple Silicon, or ARM cloud instances).
+- If your repositories are private, you'll need to authenticate in Portainer or wherever you're deploying.
+- The frontend image is built with the API URL baked in at build time. If you need to change it, rebuild the image with a different `REACT_APP_API_URL`.
+
+### Using Portainer with Docker Hub Images
+
+1. In Portainer, go to **Stacks** → **Add Stack**
+2. Select **Web editor** or **Upload**
+3. Use the `docker-compose.hub.yml` file (or copy its contents)
+4. Configure environment variables:
+   - `REACT_APP_API_URL`: **REQUIRED** - The public URL where your backend will be accessible (e.g., `http://your-server-ip:9000` or `https://your-domain.com/api` if using reverse proxy)
+   - `BACKEND_PORT`: Backend port (default: `9000`)
+   - `FRONTEND_PORT`: Frontend port (default: `80`)
+   - `ELVANTO_API_URL`: Elvanto API URL (default: `https://api.elvanto.com/v1`)
+5. **Important**: Make sure you're logged into Docker Hub in Portainer if the repository is private
+6. Deploy the stack
+
+### Using Portainer with GitHub (Build from Source)
 
 1. In Portainer, go to **Stacks** → **Add Stack**
 2. Select **Git Repository**

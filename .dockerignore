@@ -1,0 +1,68 @@
+# Git
+.git
+.gitignore
+
+# Environment files
+.env
+*.env
+backend/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp/
+.pnp.js
+
+# React
+frontend/build/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
+docker-compose*.yml
+
+# Data files
+backend/data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Debug files
+backend/debug_*.py
+backend/data/*.json
+
+# Documentation
+README.md
+*.md
+
