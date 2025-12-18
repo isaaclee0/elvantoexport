@@ -152,11 +152,26 @@ If you're using Nginx Proxy Manager (NPM) with Portainer:
 
 1. Use `docker-compose.portainer.yml` as your compose path (or copy its contents)
 2. The compose file connects to the `npm_proxy` network (make sure this network exists in Portainer)
-3. Set up two proxy hosts in NPM:
-   - **Frontend**: `https://your-domain.com` → `elvanto-export-frontend:80` (container name)
-   - **Backend API**: `https://your-domain.com/api` → `elvanto-export-backend:9000` (container name)
-   - **Important**: Configure the reverse proxy to strip the `/api` prefix before forwarding to the backend (or use a rewrite rule)
+3. Set up proxy hosts in NPM. You have two options:
+
+   **Option A: Single Proxy Host with Custom Locations (Recommended)**
+   - Create one proxy host for `https://your-domain.com`
+   - Add a **Custom Location**:
+     - **Location**: `/api`
+     - **Forward Hostname/IP**: `elvanto-export-backend`
+     - **Forward Port**: `9000`
+     - **Forward Scheme**: `http`
+     - **Websockets Support**: Enabled (if needed)
+   - The root location will automatically forward to the frontend
+
+   **Option B: Two Separate Proxy Hosts** (More complex, not recommended)
+   - Create backend proxy: Domain `your-domain.com`, path `/api`, forward to `elvanto-export-backend:9000`
+   - Create frontend proxy: Domain `your-domain.com`, forward to `elvanto-export-frontend:80`
+   - **Note**: Order and path matching can be tricky with this approach
+
 4. Set `REACT_APP_API_URL` to `https://your-domain.com` (the base URL, without `/api`)
+
+**Troubleshooting**: If you see 405 errors on `/api/*` requests, it means NPM is routing them to the frontend instead of the backend. Make sure the custom location for `/api` is configured correctly in Option A, or that the backend proxy host is set up properly in Option B.
 5. The build contexts (`./backend` and `./frontend`) work correctly with Portainer's GitHub stack feature
 
 **Example Configuration:**
