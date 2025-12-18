@@ -1,0 +1,45 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: elvanto-export-backend
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./backend:/app
+      - backend-data:/app/data
+    env_file:
+      - ./backend/.env
+    environment:
+      - ENV=development
+      - DATABASE_URL=sqlite:///./data/elvanto.db
+    command: uvicorn app.main:app --host 0.0.0.0 --port 9000 --reload
+    networks:
+      - elvanto-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: elvanto-export-frontend
+    ports:
+      - "4000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_API_URL=http://localhost:9000
+    command: npm start
+    depends_on:
+      - backend
+    networks:
+      - elvanto-network
+
+volumes:
+  backend-data:
+
+networks:
+  elvanto-network:
+    driver: bridge
+
