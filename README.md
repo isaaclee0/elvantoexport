@@ -63,7 +63,13 @@ docker login
 docker buildx version
 ```
 
-4. **Build and push images:**
+4. **Update version (optional):**
+```bash
+# Edit VERSION file with your desired version (e.g., 1.0.0, 1.2.3)
+echo "1.0.0" > VERSION
+```
+
+5. **Build and push images:**
 ```bash
 # Make the script executable (if needed)
 chmod +x build-and-push.sh
@@ -76,8 +82,18 @@ REACT_APP_API_URL=http://your-server-ip:9000 ./build-and-push.sh
 ```
 
 This will build and push:
-- `staugustine1/elvanto-export-backend:latest` (and git commit hash tag)
-- `staugustine1/elvanto-export-frontend:latest` (and git commit hash tag)
+- `staugustine1/elvanto-export-backend:latest`
+- `staugustine1/elvanto-export-backend:1.0.0` (from VERSION file)
+- `staugustine1/elvanto-export-backend:v1.0.0` (with 'v' prefix)
+- `staugustine1/elvanto-export-frontend:latest`
+- `staugustine1/elvanto-export-frontend:1.0.0` (from VERSION file)
+- `staugustine1/elvanto-export-frontend:v1.0.0` (with 'v' prefix)
+
+**Versioning**:
+- The build script reads the `VERSION` file and tags images with that version
+- Images are tagged with: `latest`, `{VERSION}`, and `v{VERSION}` (e.g., `1.0.0` and `v1.0.0`)
+- Update the `VERSION` file before building to tag a new release
+- In Portainer, you can use `IMAGE_VERSION` environment variable to pin to a specific version
 
 **Note**: 
 - The images are built for both `linux/amd64` and `linux/arm64` architectures, making them compatible with ARM-based servers (like Raspberry Pi, Apple Silicon, or ARM cloud instances).
@@ -91,6 +107,7 @@ This will build and push:
 3. Use the `docker-compose.hub.yml` file (or copy its contents)
 4. Configure environment variables:
    - `REACT_APP_API_URL`: **REQUIRED** - The public URL where your backend will be accessible (e.g., `http://your-server-ip:9000` or `https://your-domain.com/api` if using reverse proxy)
+   - `IMAGE_VERSION`: Image version to use (default: `latest`, or specify like `1.0.0`)
    - `BACKEND_PORT`: Backend port (default: `9000`)
    - `FRONTEND_PORT`: Frontend port (default: `80`)
    - `ELVANTO_API_URL`: Elvanto API URL (default: `https://api.elvanto.com/v1`)

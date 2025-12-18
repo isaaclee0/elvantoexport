@@ -1,6 +1,8 @@
 services:
   backend:
-    image: staugustine1/elvanto-export-backend:latest
+    # Use version tag from VERSION file, or 'latest' as fallback
+    # Example: staugustine1/elvanto-export-backend:1.0.0
+    image: staugustine1/elvanto-export-backend:${IMAGE_VERSION:-latest}
     container_name: elvanto-export-backend
     ports:
       - "${BACKEND_PORT:-9000}:9000"
@@ -21,7 +23,9 @@ services:
       retries: 3
 
   frontend:
-    image: staugustine1/elvanto-export-frontend:latest
+    # Use version tag from VERSION file, or 'latest' as fallback
+    # Example: staugustine1/elvanto-export-frontend:1.0.0
+    image: staugustine1/elvanto-export-frontend:${IMAGE_VERSION:-latest}
     container_name: elvanto-export-frontend
     ports:
       - "${FRONTEND_PORT:-80}:80"
