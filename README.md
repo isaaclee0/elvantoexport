@@ -129,7 +129,7 @@ This will build and push:
 1. In Portainer, go to **Stacks** → **Add Stack**
 2. Select **Git Repository**
 3. Enter repository URL: `https://github.com/isaaclee0/elvantoexport.git`
-4. Set the **Compose path** to: `docker-compose.prod.yml`
+4. Set the **Compose path** to: `docker-compose.prod.yml` (or `docker-compose.portainer.yml` if using Nginx Proxy Manager)
 5. Configure environment variables:
    - `REACT_APP_API_URL`: **REQUIRED** - The public URL where your backend will be accessible (e.g., `http://your-server-ip:9000` or `https://your-domain.com/api` if using reverse proxy)
    - `BACKEND_PORT`: Backend port (default: `9000`)
@@ -138,6 +138,24 @@ This will build and push:
 6. Deploy the stack
 
 **Important**: The `REACT_APP_API_URL` must be the **public URL** that browsers can access, not an internal Docker service name. This is because the frontend runs in the user's browser, not inside Docker.
+
+#### Portainer with Nginx Proxy Manager
+
+If you're using Nginx Proxy Manager (NPM) with Portainer:
+
+1. Use `docker-compose.portainer.yml` as your compose path (or copy its contents)
+2. The compose file connects to the `npm_proxy` network (make sure this network exists in Portainer)
+3. Set up two proxy hosts in NPM:
+   - **Frontend**: `https://your-domain.com` → `elvanto-export-frontend:80` (container name)
+   - **Backend API**: `https://your-domain.com/api` → `elvanto-export-backend:9000` (container name)
+4. Set `REACT_APP_API_URL` to `https://your-domain.com/api` (the public backend URL)
+5. The build contexts (`./backend` and `./frontend`) work correctly with Portainer's GitHub stack feature
+
+**Example Configuration:**
+- Domain: `elvantoexport.oneclickit.com.au`
+- Frontend proxy: `https://elvantoexport.oneclickit.com.au` → `elvanto-export-frontend:80`
+- Backend proxy: `https://elvantoexport.oneclickit.com.au/api` → `elvanto-export-backend:9000`
+- Environment variable: `REACT_APP_API_URL=https://elvantoexport.oneclickit.com.au/api`
 
 ### Manual Production Deployment
 

@@ -16,6 +16,7 @@ services:
     restart: unless-stopped
     networks:
       - elvanto-network
+      - npm_proxy
     healthcheck:
       # Use Python instead of curl (curl not available in python:3.11-slim)
       test: ["CMD", "python", "-c", "import http.client; conn = http.client.HTTPConnection('localhost', 9000); conn.request('GET', '/health'); r = conn.getresponse(); exit(0 if r.status == 200 else 1)"]
@@ -29,22 +30,24 @@ services:
       dockerfile: Dockerfile.prod
       args:
         # This should be the PUBLIC URL that browsers can access
-        # For same-server deployment, use http://your-server-ip:9000
         # For reverse proxy, use https://your-domain.com/api or similar
+        # IMPORTANT: This is where the BACKEND is accessible, not the frontend
         - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:9000}
     container_name: elvanto-export-frontend
-    ports:
-      - "${FRONTEND_PORT:-80}:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - elvanto-network
+      - npm_proxy
 
 volumes:
   backend-data:
 
 networks:
+  npm_proxy:
+    external: true
   elvanto-network:
     driver: bridge
 
