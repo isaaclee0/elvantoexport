@@ -74,12 +74,22 @@ echo "1.0.0" > VERSION
 # Make the script executable (if needed)
 chmod +x build-and-push.sh
 
-# Build and push (default API URL: http://localhost:9000)
+# Build and push (default: multi-arch for AMD64 and ARM64)
 ./build-and-push.sh
+
+# Build only for ARM64 (simpler, no buildx setup needed)
+BUILD_PLATFORM=arm64 ./build-and-push.sh
 
 # Or with custom API URL for your deployment
 REACT_APP_API_URL=http://your-server-ip:9000 ./build-and-push.sh
+
+# ARM64 only with custom API URL
+BUILD_PLATFORM=arm64 REACT_APP_API_URL=http://your-server-ip:9000 ./build-and-push.sh
 ```
+
+**Build Options:**
+- **Multi-arch** (default): Builds for both `linux/amd64` and `linux/arm64` - requires buildx setup
+- **ARM64 only**: Builds only for `linux/arm64` - simpler, uses standard `docker build` (good if your build server is ARM64)
 
 This will build and push:
 - `staugustine1/elvanto-export-backend:latest`

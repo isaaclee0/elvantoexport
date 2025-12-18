@@ -41,13 +41,43 @@ if ! docker buildx version > /dev/null 2>&1; then
     exit 1
 fi
 
-# Create and use a buildx builder instance
-echo -e "${BLUE}Setting up buildx builder...${NC}"
-docker buildx create --name multiarch-builder --use 2>/dev/null || docker buildx use multiarch-builder
-docker buildx inspect --bootstrap
+# Determine build platform
+# Set BUILD_PLATFORM env var to "arm64" to build only for ARM64, or "multi" for both
+BUILD_PLATFORM="${BUILD_PLATFORM:-multi}"
+
+if [ "$BUILD_PLATFORM" = "arm64" ]; then
+    PLATFORM="linux/arm64"
+    echo -e "${BLUE}Building for ARM64 only...${NC}"
+else
+    PLATFORM="linux/amd64,linux/arm64"
+    echo -e "${BLUE}Building for multiple architectures (AMD64 and ARM64)...${NC}"
+    
+    # Set up buildx builder for multi-arch builds
+    echo -e "${BLUE}Setting up buildx builder...${NC}"
+    BUILDER_NAME="multiarch-builder"
+    
+    # Check if builder exists and is usable
+    if docker buildx ls 2>/dev/null | grep -q "$BUILDER_NAME"; then
+        echo "Builder exists, attempting to use: $BUILDER_NAME"
+        if docker buildx use "$BUILDER_NAME" 2>/dev/null; then
+            echo "Successfully switched to builder: $BUILDER_NAME"
+        else
+            echo "Builder exists but can't be used, removing and recreating..."
+            docker buildx rm "$BUILDER_NAME" 2>/dev/null || true
+            docker buildx create --name "$BUILDER_NAME" --use --driver docker-container
+        fi
+    else
+        echo "Creating new builder: $BUILDER_NAME"
+        docker buildx create --name "$BUILDER_NAME" --use --driver docker-container
+    fi
+    
+    # Bootstrap the builder
+    echo "Bootstrapping builder..."
+    docker buildx inspect --bootstrap
+fi
 
 # Build and push backend image
-echo -e "${GREEN}Building backend image (linux/amd64,linux/arm64)...${NC}"
+echo -e "${GREEN}Building backend image for ${PLATFORM}...${NC}"
 cd backend
 
 # Build tags
@@ -57,15 +87,30 @@ if [ -n "$VERSION" ]; then
     TAGS="${TAGS} --tag ${BACKEND_IMAGE}:v${VERSION}"
 fi
 
-docker buildx build \
-    --platform linux/amd64,linux/arm64 \
-    ${TAGS} \
-    --push \
-    .
+if [ "$BUILD_PLATFORM" = "arm64" ]; then
+    # Simple build for single platform
+    docker build ${TAGS} -t ${BACKEND_IMAGE}:latest .
+    if [ -n "$VERSION" ]; then
+        docker tag ${BACKEND_IMAGE}:latest ${BACKEND_IMAGE}:${VERSION}
+        docker tag ${BACKEND_IMAGE}:latest ${BACKEND_IMAGE}:v${VERSION}
+    fi
+    docker push ${BACKEND_IMAGE}:latest
+    if [ -n "$VERSION" ]; then
+        docker push ${BACKEND_IMAGE}:${VERSION}
+        docker push ${BACKEND_IMAGE}:v${VERSION}
+    fi
+else
+    # Multi-arch build with buildx
+    docker buildx build \
+        --platform ${PLATFORM} \
+        ${TAGS} \
+        --push \
+        .
+fi
 cd ..
 
 # Build and push frontend production image
-echo -e "${GREEN}Building frontend production image (linux/amd64,linux/arm64)...${NC}"
+echo -e "${GREEN}Building frontend production image for ${PLATFORM}...${NC}"
 cd frontend
 
 # Default API URL - can be overridden with REACT_APP_API_URL env var
@@ -78,13 +123,32 @@ if [ -n "$VERSION" ]; then
     FRONTEND_TAGS="${FRONTEND_TAGS} --tag ${FRONTEND_IMAGE}:v${VERSION}"
 fi
 
-docker buildx build \
-    --platform linux/amd64,linux/arm64 \
-    --file Dockerfile.prod \
-    --build-arg REACT_APP_API_URL=${REACT_APP_API_URL} \
-    ${FRONTEND_TAGS} \
-    --push \
-    .
+if [ "$BUILD_PLATFORM" = "arm64" ]; then
+    # Simple build for single platform
+    docker build \
+        --file Dockerfile.prod \
+        --build-arg REACT_APP_API_URL=${REACT_APP_API_URL} \
+        -t ${FRONTEND_IMAGE}:latest \
+        .
+    if [ -n "$VERSION" ]; then
+        docker tag ${FRONTEND_IMAGE}:latest ${FRONTEND_IMAGE}:${VERSION}
+        docker tag ${FRONTEND_IMAGE}:latest ${FRONTEND_IMAGE}:v${VERSION}
+    fi
+    docker push ${FRONTEND_IMAGE}:latest
+    if [ -n "$VERSION" ]; then
+        docker push ${FRONTEND_IMAGE}:${VERSION}
+        docker push ${FRONTEND_IMAGE}:v${VERSION}
+    fi
+else
+    # Multi-arch build with buildx
+    docker buildx build \
+        --platform ${PLATFORM} \
+        --file Dockerfile.prod \
+        --build-arg REACT_APP_API_URL=${REACT_APP_API_URL} \
+        ${FRONTEND_TAGS} \
+        --push \
+        .
+fi
 cd ..
 
 echo -e "${GREEN}✓ Images built and pushed successfully!${NC}"
