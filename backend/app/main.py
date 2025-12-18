@@ -10,10 +10,21 @@ from .api import people
 app = FastAPI(title="Elvanto Export API")
 
 # Configure CORS to allow frontend to connect
+# In production, allow all origins since frontend URL is unknown
+# In development, restrict to localhost
+env = os.getenv("ENV", "development")
+if env == "production":
+    # In production, allow all origins (credentials must be False when using *)
+    allow_origins = ["*"]
+    allow_credentials = False
+else:
+    allow_origins = ["http://localhost:4000", "http://localhost:3000"]
+    allow_credentials = True
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4000", "http://localhost:3000"],  # Frontend URLs
-    allow_credentials=True,
+    allow_origins=allow_origins,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
